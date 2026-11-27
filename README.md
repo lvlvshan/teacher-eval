@@ -1,8 +1,30 @@
 # 学员对教员满意度测评系统
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-7.2.5%2B-777bb4.svg)](https://www.php.net/)
+[![ThinkPHP](https://img.shields.io/badge/ThinkPHP-6.1-1e90ff.svg)](https://www.thinkphp.cn/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ed.svg)](docker-compose.yml)
+[![Stars](https://img.shields.io/github/stars/lvlvshan/teacher-eval.svg)](https://github.com/lvlvshan/teacher-eval/stargazers)
+
 学生每月匿名给任课教员打分，系统按机房 IP 自动识别班级，后台自动统计并导出 Excel。单校区部署，基于 **ThinkPHP 6.1 + SQLite**，支持 Docker 一键运行。
 
 > 适合学校/培训机构在内网或校园网中使用：学生免登录、免扫码，打开网址即可作答；管理员在后台完成周期管理、问卷配置、异常复核与报表导出。
+
+## 目录
+
+- [功能特性](#功能特性)
+- [技术栈](#技术栈)
+- [快速开始](#快速开始)
+- [使用流程](#使用流程)
+- [统计与异常口径](#统计与异常口径)
+- [数据与隐私](#数据与隐私)
+- [常用命令](#常用命令)
+- [配置（.env）](#配置env)
+- [目录结构](#目录结构)
+- [备份与升级](#备份与升级)
+- [文档](#文档)
+- [安全说明](#安全说明)
+- [License](#license)
 
 ## 功能特性
 
@@ -184,4 +206,4 @@ docker cp teacher-eval:/var/www/html/runtime/.secret ./secret-$(date +%F)
 
 ## License
 
-本项目基于 [Apache-2.0](LICENSE.txt) 协议开源。`vendor/` 下第三方依赖遵循各自许可证。
+本项目基于 [Apache-2.0](LICENSE) 协议开源。框架 `vendor/topthink/*` 及其余第三方依赖遵循各自许可证，ThinkPHP 的版权声明见 [LICENSE.txt](LICENSE.txt)。
