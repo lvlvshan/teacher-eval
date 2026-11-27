@@ -1,0 +1,29 @@
+services:
+  teacher-eval:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: teacher-eval:1.1
+    container_name: teacher-eval
+    restart: unless-stopped
+    # host 网络：Apache 直接看到学生真实 IP（按 IP 自动进班必需）
+    network_mode: host
+    environment:
+      APP_DEBUG: "false"
+      INSTALL_DEMO: "${INSTALL_DEMO:-0}"
+      HTTP_PORT: "${HTTP_PORT:-8080}"
+      SESSION_TTL: "${SESSION_TTL:-30}"
+      IP_WHITELIST: "true"
+      EVAL_SECRET: "${EVAL_SECRET:-}"
+    volumes:
+      # 数据库、导出文件、日志都放在命名卷里，重建容器不丢数据
+      - eval_runtime:/var/www/html/runtime
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${HTTP_PORT}/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  eval_runtime:

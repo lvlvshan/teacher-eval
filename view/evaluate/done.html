@@ -1,0 +1,41 @@
+{extend name="layout/base" /}
+
+{block name="title"}提交成功{/block}
+
+{block name="body"}
+<div class="ev-hero">
+  <div class="ev-box">
+    <div class="ev-check">✓</div>
+    <h1 class="ev-title">提交成功</h1>
+    <p class="ev-sub">
+      {if condition="!empty($target)"}
+        已收到你对 <b>{$target.teacher_name}</b>（{$target.course_name}）的评价。
+      {else/}
+        已收到你的评价。
+      {/if}
+    </p>
+    <p class="ev-sub">你的作答已匿名保存，感谢参与。</p>
+
+    <div class="ev-actions">
+      <a class="ev-btn" href="/c/{$classId}">继续评价其他教员</a>
+    </div>
+    <p class="ev-hint">全部完成后可直接关闭本页面。</p>
+  </div>
+</div>
+
+<style>
+.ev-hero{min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(1200px 600px at 50% -10%,#dcfce7 0%,transparent 60%),var(--bg)}
+.ev-box{width:100%;max-width:460px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:34px 28px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+.ev-check{width:60px;height:60px;border-radius:50%;background:#ecfdf5;color:#15803d;
+  display:grid;place-items:center;font-size:30px;margin:0 auto 14px}
+.ev-title{font-size:21px;margin-bottom:10px}
+.ev-sub{color:var(--muted);font-size:13px;margin-bottom:6px}
+.ev-actions{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ev-btn{display:inline-block;padding:11px 22px;border-radius:10px;background:var(--brand);
+  color:#fff;font-size:14px}
+.ev-btn:hover{background:var(--brand-dark);text-decoration:none}
+.ev-hint{margin-top:14px;font-size:12px;color:#94a3b8}
+</style>
+{/block}

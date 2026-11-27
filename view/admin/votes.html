@@ -1,0 +1,115 @@
+{extend name="layout/admin" /}
+
+{block name="title"}投票详情{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">投票详情</h1>
+    <div class="small muted">一台机房电脑（IP + 浏览器 UA 指纹）视为一名学生；可查看其提交环境、每份问卷的逐题得分与开放题原文。</div>
+  </div>
+  <form method="get" action="/admin/votes" class="inline">
+    <select name="period_id" style="width:165px">
+      {volist name="periods" id="p"}
+        <option value="{$p.id}" {if condition="$p.id == $pid"}selected{/if}>{$p.name}</option>
+      {/volist}
+      {if condition="empty($periods)"}<option value="0">暂无周期</option>{/if}
+    </select>
+    <select name="class_id" style="width:120px">
+      <option value="0">全部班级</option>
+      {volist name="classes" id="c"}
+        <option value="{$c.id}" {if condition="$c.id == $filters.class_id"}selected{/if}>{$c.name}</option>
+      {/volist}
+    </select>
+    <select name="teacher_id" style="width:120px">
+      <option value="0">全部教员</option>
+      {volist name="teachers" id="t"}
+        <option value="{$t.id}" {if condition="$t.id == $filters.teacher_id"}selected{/if}>{$t.name}</option>
+      {/volist}
+    </select>
+    <select name="course_id" style="width:120px">
+      <option value="0">全部课程</option>
+      {volist name="courses" id="c"}
+        <option value="{$c.id}" {if condition="$c.id == $filters.course_id"}selected{/if}>{$c.name}</option>
+      {/volist}
+    </select>
+    <select name="flag" style="width:120px">
+      <option value="">全部状态</option>
+      <option value="ok" {if condition="$filters.flag == 'ok'"}selected{/if}>正常</option>
+      <option value="timeout" {if condition="$filters.flag == 'timeout'"}selected{/if}>超时</option>
+      <option value="anomaly" {if condition="$filters.flag == 'anomaly'"}selected{/if}>异常提示</option>
+      <option value="excluded" {if condition="$filters.flag == 'excluded'"}selected{/if}>已剔除</option>
+    </select>
+    <input type="text" name="keyword" value="{$filters.keyword|default=''|htmlspecialchars}" placeholder="IP / MAC / 设备号" style="width:150px">
+    <button class="btn">筛选</button>
+  </form>
+</div>
+
+<div class="row">
+  <div class="col"><div class="card"><div class="small muted">本周期提交总数</div><h2 style="margin:4px 0 0">{$submissionCount}</h2></div></div>
+  <div class="col"><div class="card"><div class="small muted">当前筛选设备数</div><h2 style="margin:4px 0 0">{:count($devices)}</h2></div></div>
+  <div class="col"><div class="card"><div class="small muted">异常提示</div><h2 style="margin:4px 0 0">{$anomalies}</h2></div></div>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:110px">设备 / 匿名编号</th>
+        <th style="width:140px">提交 IP</th>
+        <th style="width:140px">MAC（ARP）</th>
+        <th>设备标识 / 测评对象</th>
+        <th style="width:110px">班级</th>
+        <th style="width:100px" class="center">提交数 / 得分</th>
+        <th style="width:150px">时间</th>
+        <th style="width:140px">状态 / 操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="devices" id="d"}
+        <tr>
+          <td><code>{$d.device_code|htmlspecialchars}</code></td>
+          <td class="small">
+            {if condition="$d.ip"}{$d.ip|htmlspecialchars}{else/}<span class="muted">{$d.ip_masked|default='—'}</span>{/if}
+          </td>
+          <td class="small">
+            {if condition="$d.mac"}{$d.mac|htmlspecialchars}{else/}<span class="muted">—（跨网段/未解析）</span>{/if}
+          </td>
+          <td class="small muted" style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{$d.ua|default='—'|htmlspecialchars}</td>
+          <td class="small">{:implode('、', $d['classes']) ?: '—'}</td>
+          <td class="center"><b>{$d.count}</b></td>
+          <td class="small muted">{$d.last_at}</td>
+          <td class="small">
+            {if condition="$d.anomalies"}<span class="tag tag-warn">异常 {$d.anomalies}</span>{else/}<span class="tag tag-ok">正常</span>{/if}
+          </td>
+        </tr>
+        {volist name="d.submissions" id="sub"}
+          <tr style="background:#fbfcfe">
+            <td class="small" style="padding-left:26px">└ {$sub.anon_no}</td>
+            <td class="small muted">—</td>
+            <td class="small muted">—</td>
+            <td class="small">{$sub.teacher_name} · {$sub.course_name}</td>
+            <td class="small">{$sub.class_name}</td>
+            <td class="center small">{$sub.avg_score} 分<br><span class="muted">{:round($sub['duration_ms']/1000)} 秒</span></td>
+            <td class="small muted">{$sub.submitted_at}</td>
+            <td class="small">
+              {if condition="$sub.flag == 'ok'"}<span class="tag tag-ok">正常</span>
+              {elseif condition="$sub.flag == 'timeout'"/}<span class="tag tag-warn">超时</span>
+              {else/}<span class="tag tag-err">{:ev_flag_text($sub['flag'])}</span>{/if}
+              {if condition="$sub.excluded"}<span class="tag tag-err">已剔除</span>{/if}
+              <a class="btn btn-sm" href="/admin/votes/{$sub.id}" style="margin-left:4px">详情</a>
+            </td>
+          </tr>
+        {/volist}
+        {/volist}
+        {if condition="empty($devices)"}
+          <tr><td colspan="8" class="center muted" style="padding:30px">没有符合条件的记录。请选择周期或调整筛选条件。</td></tr>
+        {/if}
+    </tbody>
+  </table>
+</div>
+<p class="small muted mt">
+  说明：浏览器无法读取 MAC，MAC 由服务器在提交时读取 ARP 邻居表获得，仅当服务器与机房电脑在同一二层网段时有效；跨网段、代理或 NAT 显示「—」。
+  明文 IP 仅在本页和投票详情页显示，Excel 导出仍使用 /24 掩码。列表按最近 2000 条提交汇总，最多展示 500 台设备。
+</p>
+{/block}

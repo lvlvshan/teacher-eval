@@ -1,0 +1,90 @@
+{extend name="layout/admin" /}
+
+{block name="title"}提交明细{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">提交明细</h1>
+    <div class="small muted">匿名编号在本周期内按提交顺序递增，不含任何学员身份信息</div>
+  </div>
+  <form method="get" action="/admin/detail" class="inline">
+    <select name="period_id" style="width:170px">
+      {volist name="periods" id="p"}
+        <option value="{$p.id}" {if condition="$p.id == $pid"}selected{/if}>{$p.name}</option>
+      {/volist}
+    </select>
+    <select name="teacher_id" style="width:150px">
+      <option value="0">全部教员</option>
+      {volist name="teachers" id="t"}
+        <option value="{$t.id}" {if condition="$t.id == $filters.teacher_id"}selected{/if}>{$t.name}</option>
+      {/volist}
+    </select>
+    <select name="flag" style="width:140px">
+      <option value="">全部状态</option>
+      <option value="ok" {if condition="$filters.flag == 'ok'"}selected{/if}>正常</option>
+      <option value="timeout" {if condition="$filters.flag == 'timeout'"}selected{/if}>超时提交</option>
+      <option value="anomaly" {if condition="$filters.flag == 'anomaly'"}selected{/if}>异常提示</option>
+      <option value="fast" {if condition="$filters.flag == 'fast'"}selected{/if}>过快速</option>
+      <option value="uniform" {if condition="$filters.flag == 'uniform'"}selected{/if}>全题同分</option>
+      <option value="excluded" {if condition="$filters.flag == 'excluded'"}selected{/if}>已剔除</option>
+    </select>
+    <button class="btn">筛选</button>
+  </form>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th>匿名编号</th><th>教员</th><th>班级</th><th>课程</th>
+        <th class="center">总均分</th><th class="center">耗时</th>
+        <th>提交时间</th><th>状态</th><th>网段</th><th style="width:150px">复核</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="rows" id="r"}
+        <tr>
+          <td><code>{$r.anon_no}</code></td>
+          <td>{$r.teacher_name}</td>
+          <td>{$r.class_name}</td>
+          <td>{$r.course_name}</td>
+          <td class="center"><b>{$r.avg_score}</b></td>
+          <td class="center small">{:round($r['duration_ms']/1000)} 秒</td>
+          <td class="small">{$r.submitted_at}</td>
+          <td>
+            {if condition="$r.flag == 'ok'"}<span class="tag tag-ok">正常</span>
+            {elseif condition="$r.flag == 'timeout'"/}<span class="tag tag-warn">超时</span>
+            {else/}<span class="tag tag-err">{:ev_flag_text($r['flag'])}</span>{/if}
+            {if condition="$r.excluded"}<span class="tag tag-err">已剔除</span>{/if}
+            {if condition="$r.reviewed"}<span class="tag tag-info">已复核</span>{/if}
+          </td>
+          <td class="small muted">{$r.ip_masked}</td>
+          <td>
+            {if condition="$r.excluded"}
+              <form method="post" action="/admin/detail/review" style="display:inline">
+                <input type="hidden" name="id" value="{$r.id}">
+                <input type="hidden" name="period_id" value="{$pid}">
+                <input type="hidden" name="valid" value="1">
+                <button class="btn btn-sm">恢复计入</button>
+              </form>
+            {else/}
+              <form method="post" action="/admin/detail/review" style="display:inline"
+                    onsubmit="return confirm('将这条记录剔除统计？')">
+                <input type="hidden" name="id" value="{$r.id}">
+                <input type="hidden" name="period_id" value="{$pid}">
+                <input type="hidden" name="valid" value="0">
+                <button class="btn btn-sm btn-danger">剔除</button>
+              </form>
+            {/if}
+          </td>
+        </tr>
+      {/volist}
+      {if condition="empty($rows)"}
+        <tr><td colspan="10" class="center muted" style="padding:30px">没有符合条件的记录。</td></tr>
+      {/if}
+    </tbody>
+  </table>
+</div>
+<p class="small muted mt">最多显示最近 200 条。异常记录（过快速、全题同分）默认计入统计，仅作提示；如确认是脏数据，可点「剔除」排除。</p>
+{/block}

@@ -1,0 +1,81 @@
+{extend name="layout/admin" /}
+
+{block name="title"}数据看板{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">数据看板</h1>
+    <div class="small muted">
+      {if condition="!empty($period)"}
+        {$period.name} ·
+        <span class="tag {if condition="$period.state == 'open'"}tag-ok{elseif condition="$period.state == 'archived'"/}tag-warn{else/}{/if}">{:ev_state_text($period.state)}</span>
+      {else/}
+        还没有任何测评周期
+      {/if}
+    </div>
+  </div>
+  <form method="get" action="/admin" class="inline">
+    <select name="period_id" onchange="this.form.submit()" style="min-width:180px">
+      {volist name="periods" id="p"}
+        <option value="{$p.id}" {if condition="$p.id == $pid"}selected{/if}>{$p.name}（{:ev_state_text($p['state'])}）</option>
+      {/volist}
+    </select>
+  </form>
+</div>
+
+<div class="stats mb">
+  <div class="stat"><b>{$data.total_submissions}</b><span>有效提交份数</span></div>
+  <div class="stat"><b>{$data.target_count}</b><span>测评对象数</span></div>
+  <div class="stat"><b style="{if condition="$data.anomaly > 0"}color:#b45309{/if}">{$data.anomaly}</b><span>异常提示</span></div>
+</div>
+
+{if condition="empty($data.rows)"}
+  <div class="card center muted" style="padding:40px">
+    本月还没有测评对象。请到「周期」里创建测评（选择教员 + 班级 + 课程）。
+  </div>
+{else/}
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:52px">排名</th>
+        <th>教员</th>
+        <th>班级</th>
+        <th>课程</th>
+        <th style="width:64px">参评</th>
+        {volist name="data.dimensions" id="d"}
+          <th class="center">{$d.name}</th>
+        {/volist}
+        <th class="center">总均分</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="data.rows" id="r"}
+        <tr>
+          <td class="center">
+            {if condition="$r.rank"}
+              <span class="tag {if condition="$r.rank <= 3"}tag-info{/if}">{$r.rank}</span>
+            {else/}
+              <span class="muted small">—</span>
+            {/if}
+          </td>
+          <td><b>{$r.target.teacher_name}</b> <span class="muted small">{$r.target.employee_no}</span></td>
+          <td>{$r.target.class_name}</td>
+          <td>{$r.target.course_name}</td>
+          <td class="center">{$r.count}</td>
+          {volist name="r.values" id="v"}
+            <td class="center">{if condition="$v !== null"}{$v}{else/}<span class="muted">—</span>{/if}</td>
+          {/volist}
+          <td class="center"><b>{if condition="$r.avg_total !== null"}{$r.avg_total}{else/}—{/if}</b></td>
+        </tr>
+      {/volist}
+    </tbody>
+  </table>
+</div>
+<p class="small muted mt">
+  总均分满分 100（20 道量表题之和），有有效总分的样本按总均分参与排名。
+  异常记录（过快速提交、全题同分）默认计入统计，仅在「异常提示」中标注；如确认是脏数据，可在「明细」中剔除。
+</p>
+{/if}
+{/block}

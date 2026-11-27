@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{block name="title"}后台{/block} - 学员满意度测评</title>
+{include file="layout/style" /}
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">学员<em>满意度</em>测评</div>
+    <nav class="nav">
+      <a href="/admin"{if condition="$active == 'dashboard'"} class="on"{/if}>看板</a>
+      <a href="/admin/periods"{if condition="$active == 'periods'"} class="on"{/if}>周期</a>
+      <a href="/admin/teachers"{if condition="$active == 'teachers'"} class="on"{/if}>教员</a>
+      <a href="/admin/classes"{if condition="$active == 'classes'"} class="on"{/if}>班级</a>
+      <a href="/admin/courses"{if condition="$active == 'courses'"} class="on"{/if}>课程</a>
+      <a href="/admin/detail"{if condition="$active == 'detail'"} class="on"{/if}>明细</a>
+      <a href="/admin/votes"{if condition="$active == 'votes'"} class="on"{/if}>投票详情</a>
+      <a href="/admin/export"{if condition="$active == 'export'"} class="on"{/if}>导出</a>
+    </nav>
+    <div class="small muted">
+      {$adminName|default=''} &middot; <a href="/admin/logout">退出</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  {if condition="!empty($flash)"}
+    <div class="flash flash-{$flash.type}">{$flash.msg}</div>
+  {/if}
+  {block name="content"}{/block}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,143 @@
+{extend name="layout/admin" /}
+
+{block name="title"}投票详情 · {$vote.anon_no}{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">投票详情 <code>{$vote.anon_no}</code></h1>
+    <div class="small muted">{$vote.period_name} · {$vote.class_name} · {$vote.course_name} · {$vote.teacher_name}</div>
+  </div>
+  <div>
+    <a class="btn" href="/admin/votes?period_id={$vote.period_id}">返回列表</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>提交环境</h2>
+  <div class="tablewrap">
+    <table>
+      <tbody>
+        <tr>
+          <th style="width:130px">设备号</th><td><code>{$vote.device_code|htmlspecialchars}</code></td>
+          <th style="width:130px">匿名编号</th><td><code>{$vote.anon_no}</code></td>
+        </tr>
+        <tr>
+          <th>提交 IP（明文）</th><td>{$vote.ip|default='—'|htmlspecialchars}</td>
+          <th>网段掩码</th><td>{$vote.ip_masked|default='—'}</td>
+        </tr>
+        <tr>
+          <th>MAC（ARP）</th>
+          <td>
+            {if condition="$vote.mac"}{$vote.mac|htmlspecialchars}
+              <span class="small muted">（{if condition="$vote.mac_source == 'arp'"}ARP 邻居表{else/}未知来源{/if}）</span>
+            {else/}<span class="muted">—（跨网段 / 代理 / NAT 无法获取）</span>{/if}
+          </td>
+          <th>提交时间</th><td>{$vote.submitted_at}</td>
+        </tr>
+        <tr>
+          <th>浏览器 UA</th><td colspan="3" class="small muted" style="word-break:break-all">{$vote.ua|default='—'|htmlspecialchars}</td>
+        </tr>
+        <tr>
+          <th>作答耗时</th><td>{:round($vote['duration_ms']/1000)} 秒</td>
+          <th>状态</th>
+          <td>
+            {if condition="$vote.flag == 'ok'"}<span class="tag tag-ok">正常</span>
+            {elseif condition="$vote.flag == 'timeout'"/}<span class="tag tag-warn">超时提交</span>
+            {else/}<span class="tag tag-err">{:ev_flag_text($vote['flag'])}</span>{/if}
+            {if condition="$vote.excluded"}<span class="tag tag-err">已剔除</span>{/if}
+            {if condition="$vote.reviewed"}<span class="tag tag-info">已复核</span>{/if}
+          </td>
+        </tr>
+        <tr>
+          <th>总均分</th><td><b>{$vote.avg_score}</b>（总分 {$vote.total_score}）</td>
+          <th>问卷版本</th><td>{$vote.questionnaire_id} / {$vote.scale_max} 分制</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    {if condition="$vote.excluded"}
+      <form method="post" action="/admin/detail/review" style="display:inline">
+        <input type="hidden" name="id" value="{$vote.id}">
+        <input type="hidden" name="period_id" value="{$vote.period_id}">
+        <input type="hidden" name="valid" value="1">
+        <button class="btn btn-sm">恢复计入</button>
+      </form>
+    {else/}
+      <form method="post" action="/admin/detail/review" style="display:inline"
+            onsubmit="return confirm('将这条记录剔除统计？')">
+        <input type="hidden" name="id" value="{$vote.id}">
+        <input type="hidden" name="period_id" value="{$vote.period_id}">
+        <input type="hidden" name="valid" value="0">
+        <button class="btn btn-sm btn-danger">剔除统计</button>
+      </form>
+    {/if}
+  </div>
+</div>
+
+<div class="card">
+  <h2>评分明细（{$vote.scale_max} 分制）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th style="width:160px">维度</th><th>题目</th><th style="width:100px" class="center">得分</th><th style="width:130px" class="center">维度排序</th></tr>
+      </thead>
+      <tbody>
+        {volist name="vote.ratings" id="a"}
+          <tr>
+            <td class="small">{$a.dimension_name|default='未分组'}</td>
+            <td class="small">{$a.question_title|htmlspecialchars}</td>
+            <td class="center"><b>{$a.score}</b> / {$vote.scale_max}</td>
+            <td class="center small muted">{$a.dimension_sort|default='—'}</td>
+          </tr>
+        {/volist}
+        {if condition="empty($vote.ratings)"}
+          <tr><td colspan="4" class="center muted" style="padding:20px">没有评分题答案。</td></tr>
+        {/if}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>开放题原文</h2>
+  {volist name="vote.texts" id="a"}
+    <div style="border-bottom:1px solid var(--line);padding:10px 0">
+      <div class="small muted">{$a.question_title|htmlspecialchars}</div>
+      <div style="margin-top:4px;white-space:pre-wrap">{$a.content|htmlspecialchars}</div>
+    </div>
+  {/volist}
+  {if condition="empty($vote.texts)"}
+    <p class="small muted">该提交没有填写开放题。</p>
+  {/if}
+</div>
+
+<div class="card">
+  <h2>同一设备的其他提交（{:count($vote['others'])}）</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th style="width:100px">匿名编号</th><th>教员 / 课程</th><th style="width:90px" class="center">均分</th><th style="width:150px">提交时间</th><th style="width:130px">状态</th><th style="width:70px"></th></tr></thead>
+      <tbody>
+        {volist name="vote.others" id="o"}
+          <tr>
+            <td class="small"><code>{$o.anon_no}</code></td>
+            <td class="small">{$o.teacher_name} · {$o.course_name}</td>
+            <td class="center">{$o.avg_score}</td>
+            <td class="small muted">{$o.submitted_at}</td>
+            <td class="small">{:ev_flag_text($o['flag'])}{if condition="$o.excluded"} · 已剔除{/if}{if condition="$o.reviewed"} · 已复核{/if}</td>
+            <td><a class="btn btn-sm" href="/admin/votes/{$o.id}">查看</a></td>
+          </tr>
+        {/volist}
+        {if condition="empty($vote.others)"}
+          <tr><td colspan="6" class="center muted" style="padding:20px">该设备在本周期没有其他提交。</td></tr>
+        {/if}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p class="small muted mt">
+  说明：学生端全程匿名，不含姓名与学号；本页「设备号」由 IP + UA 指纹派生，仅代表一台答题设备。ARP 获取的 MAC 仅在同网段有效。
+</p>
+{/block}

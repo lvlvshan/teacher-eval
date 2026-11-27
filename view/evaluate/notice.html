@@ -1,0 +1,37 @@
+{extend name="layout/base" /}
+
+{block name="title"}{$title}{/block}
+
+{block name="body"}
+<div class="ev-hero">
+  <div class="ev-box">
+    <div class="ev-icon">!</div>
+    <h1 class="ev-title">{$title}</h1>
+    <p class="ev-msg">{$message}</p>
+
+    <div class="ev-actions">
+      {if condition="!empty($back)"}
+        <a class="ev-btn" href="javascript:history.back()">返回上一页</a>
+      {/if}
+      <a class="ev-btn ev-btn-plain" href="/">返回首页</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.ev-hero{min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(1200px 600px at 50% -10%,#fef3c7 0%,transparent 60%),var(--bg)}
+.ev-box{width:100%;max-width:480px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:32px 26px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+.ev-icon{width:54px;height:54px;border-radius:50%;background:#fffbeb;color:#b45309;
+  display:grid;place-items:center;font-size:28px;font-weight:700;margin:0 auto 14px}
+.ev-title{font-size:20px;margin-bottom:10px}
+.ev-msg{color:#475569;font-size:14px;line-height:1.8;margin:0}
+.ev-actions{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ev-btn{display:inline-block;padding:10px 20px;border-radius:10px;background:var(--brand);
+  color:#fff;font-size:14px}
+.ev-btn:hover{background:var(--brand-dark);text-decoration:none}
+.ev-btn-plain{background:#fff;color:#475569;border:1px solid #cbd5e1}
+.ev-btn-plain:hover{background:#f1f5f9}
+</style>
+{/block}

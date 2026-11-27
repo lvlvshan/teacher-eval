@@ -1,0 +1,85 @@
+{extend name="layout/admin" /}
+
+{block name="title"}导出{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <h1 style="margin:0">Excel 导出</h1>
+  <div class="small muted">两种产物：单教员年表（对齐现有模板）与汇总包</div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>产物 A · 学员满意度得分年表</h2>
+      <p class="small muted">完全按现有模板版式：A1 标题、B 列题目、C~N 列 1–12 月、最后一行总分（满分 100）。</p>
+      <form method="post" action="/admin/export/annual" target="_blank">
+        <div class="row">
+          <div class="col">
+            <label class="field"><span>年份</span>
+              <select name="year" required>
+                {volist name="years" id="y"}
+                  <option value="{$y}" {if condition="$y == date('Y')"}selected{/if}>{$y} 年</option>
+                {/volist}
+                {if condition="empty($years)"}<option value="{:date('Y')}">{:date('Y')} 年</option>{/if}
+              </select>
+            </label>
+          </div>
+          <div class="col">
+            <label class="field"><span>教员</span>
+              <select name="teacher_id">
+                <option value="0">全部教员（打包 zip）</option>
+                {volist name="teachers" id="t"}<option value="{$t.id}">{$t.name}（{$t.employee_no}）</option>{/volist}
+              </select>
+            </label>
+          </div>
+        </div>
+        <label class="field"><span>课程（可选，不选则合并该教员所有课程）</span>
+          <select name="course_id">
+            <option value="0">全部课程</option>
+            {volist name="courses" id="c"}<option value="{$c.id}">{$c.name}</option>{/volist}
+          </select>
+        </label>
+        <button class="btn btn-primary">生成并下载</button>
+        <span class="small muted">没有数据的月份留空，不填 0。</span>
+      </form>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>产物 B · 汇总包</h2>
+      <p class="small muted">
+        一个工作簿多页：月度汇总、提交明细（匿名）、分数分布、总分趋势、机房场次、教员的优点与建议。
+      </p>
+      <form method="post" action="/admin/export/pack" target="_blank">
+        <label class="field"><span>年份</span>
+          <select name="year" required>
+            {volist name="years" id="y"}
+              <option value="{$y}" {if condition="$y == date('Y')"}selected{/if}>{$y} 年</option>
+            {/volist}
+            {if condition="empty($years)"}<option value="{:date('Y')}">{:date('Y')} 年</option>{/if}
+          </select>
+        </label>
+        <label class="field" style="display:flex;gap:8px;align-items:center">
+          <input type="checkbox" name="with_archive" value="1" style="width:auto">
+          <span style="margin:0">附「配置存档」页（IP 规则、名单快照、归档哈希）</span>
+        </label>
+        <button class="btn btn-primary">生成并下载</button>
+        <span class="small muted">用于自查或提交督导，附存档页可自证数据来源。</span>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>口径说明</h2>
+  <ul class="small" style="margin:0;padding-left:20px;line-height:2">
+    <li>每题得分 = 该题当月有效提交的平均分。</li>
+    <li>总分 = 20 道量表题得分之和，满分 100；维度分 = 本维度各题平均分的算术平均。</li>
+    <li>计入统计：除管理员人工「剔除」外的全部记录；异常答卷（过快速、全题同分、超时）默认计入，仅在明细中标注。</li>
+    <li>排名按有效提交的总均分排序；无总均分（样本不足）的记录不参与。</li>
+    <li>导出行为全部写入审计日志，可追溯到操作人与时间。</li>
+  </ul>
+</div>
+{/block}

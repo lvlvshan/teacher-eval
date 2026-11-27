@@ -1,0 +1,148 @@
+{extend name="layout/admin" /}
+
+{block name="title"}测评周期{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">测评周期</h1>
+    <div class="small muted">一个周期 = 一个月。创建测评时选择「教员 + 班级 + 课程」并填写本班 IP 段；建好后可去「场次」排机房时段。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>新建 / 编辑周期</h2>
+  <form method="post" action="/admin/periods/save">
+    <input type="hidden" name="id" value="0">
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>年份</span>
+          <input type="number" name="year" value="{:date('Y')}" min="2020" max="2100" required>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>月份</span>
+          <input type="number" name="month" value="{:date('n')}" min="1" max="12" required>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>显示名称（留空自动生成）</span>
+          <input type="text" name="name" placeholder="如：2026年11月">
+        </label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>开始时间</span>
+          <input type="datetime-local" name="starts_at" value="{$startDefault}">
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>截止时间</span>
+          <input type="datetime-local" name="ends_at" value="{$endDefault}">
+        </label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>教员</span>
+          <select name="add_teacher_id" id="addTeacherId">
+            <option value="">请选择</option>
+            {volist name="teachers" id="t"}<option value="{$t.id}">{$t.name}（{$t.employee_no}）</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>班级</span>
+          <select name="add_class_id" id="addClassId">
+            <option value="">请选择</option>
+            {volist name="classes" id="c"}<option value="{$c.id}">{$c.name}</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>课程</span>
+          <select name="add_course_id" id="addCourseId">
+            <option value="">请选择</option>
+            {volist name="courses" id="co"}<option value="{$co.id}">{$co.name}</option>{/volist}
+          </select>
+        </label>
+      </div>
+    </div>
+    <label class="field"><span>本班 IP 段（学生按 IP 自动进入本班）</span>
+      <input type="text" name="add_cidrs" placeholder="如 10.10.1.0/24，多个用逗号分隔；支持单个 IP">
+    </label>
+    <button class="btn btn-primary">创建并开始测评</button>
+    <span class="small muted">创建后立即开始，学生打开首页即按 IP 段进入本班；问卷与班级名单自动生成，之后可在「名单」页调整各班 IP 段。</span>
+  </form>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th>周期</th>
+        <th>起止时间</th>
+        <th>状态</th>
+        <th class="center">测评对象</th>
+        <th class="center">提交份数</th>
+        <th class="center">场次</th>
+        <th style="width:330px">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="list" id="p"}
+        <tr>
+          <td><b>{$p.name}</b><div class="small muted">{$p.year}年{$p.month}月</div></td>
+          <td class="small">{$p.starts_at}<br>{$p.ends_at}</td>
+          <td>
+            {if condition="$p.state == 'open'"}<span class="tag tag-ok">进行中</span>
+            {elseif condition="$p.state == 'closed'"/}<span class="tag">已截止</span>
+            {elseif condition="$p.state == 'archived'"/}<span class="tag tag-warn">已归档 v{$p.archive_version}</span>
+            {else/}<span class="tag tag-info">未开始</span>{/if}
+          </td>
+          <td class="center">{$p.target_count}</td>
+          <td class="center">{$p.submit_count}</td>
+          <td class="center">{$p.slot_count}</td>
+          <td>
+            <a class="btn btn-sm" href="/admin/periods/{$p.id}/targets">名单</a>
+            <a class="btn btn-sm" href="/admin/periods/{$p.id}/slots">场次</a>
+            <a class="btn btn-sm" href="/admin/periods/{$p.id}/questionnaire">问卷</a>
+            <a class="btn btn-sm" href="/admin?period_id={$p.id}">汇总</a>
+
+            {if condition="$p.state != 'archived'"}
+              {if condition="$p.state != 'open'"}
+                <form method="post" action="/admin/periods/state" style="display:inline">
+                  <input type="hidden" name="id" value="{$p.id}">
+                  <input type="hidden" name="state" value="open">
+                  <button class="btn btn-sm">开始</button>
+                </form>
+              {else/}
+                <form method="post" action="/admin/periods/state" style="display:inline">
+                  <input type="hidden" name="id" value="{$p.id}">
+                  <input type="hidden" name="state" value="closed">
+                  <button class="btn btn-sm">结束问卷</button>
+                </form>
+              {/if}
+              <form method="post" action="/admin/periods/{$p.id}/archive" style="display:inline"
+                    onsubmit="return confirm('归档后本周期只读，问卷、名单、IP 规则全部冻结。确定继续？')">
+                <button class="btn btn-sm btn-danger">归档</button>
+              </form>
+            {else/}
+              <form method="post" action="/admin/periods/{$p.id}/unarchive" style="display:inline"
+                    onsubmit="return confirm('解冻需要填写原因，且会留痕。确定继续？')">
+                <input type="text" name="reason" placeholder="解冻原因" required
+                       style="width:120px;display:inline-block;padding:3px 6px;font-size:12px">
+                <button class="btn btn-sm btn-danger">解冻</button>
+              </form>
+            {/if}
+          </td>
+        </tr>
+      {/volist}
+      {if condition="empty($list)"}
+        <tr><td colspan="7" class="center muted" style="padding:30px">还没有周期，先在上面创建一个。</td></tr>
+      {/if}
+    </tbody>
+  </table>
+</div>
+{/block}

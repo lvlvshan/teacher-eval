@@ -1,0 +1,121 @@
+{extend name="layout/admin" /}
+
+{block name="title"}测评对象名单{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">测评对象名单</h1>
+    <div class="small muted">{$period.name} · 状态 {:ev_state_text($period['state'])} · 共 {$period.target_count} 条</div>
+  </div>
+  <div>
+    <a class="btn" href="/admin/periods">返回周期</a>
+  </div>
+</div>
+
+{if condition="$period.state == 'archived'"}
+  <div class="flash flash-err">本周期已归档，名单只读。需要修改请先在「周期」里解冻。</div>
+{/if}
+
+<div class="card">
+  <h2>添加单条</h2>
+  <form method="post" action="/admin/periods/{$period.id}/targets/save">
+    <div class="inline">
+      <div class="grow">
+        <label class="field" style="margin-bottom:0"><span>教员</span>
+          <select name="add_teacher_id" required>
+            <option value="">请选择</option>
+            {volist name="teachers" id="t"}<option value="{$t.id}">{$t.name}（{$t.employee_no}）</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <div class="grow">
+        <label class="field" style="margin-bottom:0"><span>班级</span>
+          <select name="add_class_id" required>
+            <option value="">请选择</option>
+            {volist name="classes" id="c"}<option value="{$c.id}">{$c.name}</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <div class="grow">
+        <label class="field" style="margin-bottom:0"><span>课程</span>
+          <select name="add_course_id" required>
+            <option value="">请选择</option>
+            {volist name="courses" id="c"}<option value="{$c.id}">{$c.name}</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <button class="btn">添加</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>本班 IP 段</h2>
+  <p class="small muted" style="margin-top:-4px">学生打开首页时按 IP 匹配这些网段，自动进入对应班级；多个用逗号分隔，支持 CIDR 与单个 IP。留空保存表示清空该班网段。</p>
+  {volist name="grouped" id="g"}
+    <form method="post" action="/admin/periods/{$period.id}/ip" class="inline" style="margin-bottom:10px">
+      <input type="hidden" name="class_id" value="{$g.class_id}">
+      <div class="grow">
+        <label class="field" style="margin-bottom:0"><span>{$g.class_name}</span>
+          <input type="text" name="cidrs" value="{$g.cidrs}" placeholder="如 10.10.1.0/24" {if condition="$period.state == 'archived'"}disabled{/if}>
+        </label>
+      </div>
+      {if condition="$period.state != 'archived'"}<button class="btn">保存 IP 段</button>{/if}
+      {if condition="empty($g.cidrs)"}<span class="small" style="color:#b45309">未设置，学生无法进入本班</span>{/if}
+    </form>
+  {/volist}
+  {if condition="empty($grouped)"}
+    <div class="small muted">先添加测评对象，再设置本班 IP 段。</div>
+  {/if}
+</div>
+
+<form method="post" action="/admin/periods/{$period.id}/targets/save">
+  {volist name="grouped" id="g"}
+    <div class="tablewrap mb">
+      <table>
+        <thead>
+          <tr>
+            <th colspan="6" style="background:#f1f5f9">
+              {$g.class_name}
+            </th>
+          </tr>
+          <tr>
+            <th>教员</th>
+            <th>课程</th>
+            <th style="width:130px">状态</th>
+            <th style="width:180px">不参评原因</th>
+            <th style="width:80px">排序</th>
+            <th style="width:70px">删除</th>
+          </tr>
+        </thead>
+        <tbody>
+          {volist name="g.items" id="t"}
+            <tr>
+              <td><b>{$t.teacher_name}</b> <span class="muted small">{$t.employee_no}</span></td>
+              <td>{$t.course_name}</td>
+              <td>
+                <select name="state[{$t.id}]">
+                  <option value="required" {if condition="$t.state == 'required'"}selected{/if}>必评</option>
+                  <option value="optional" {if condition="$t.state == 'optional'"}selected{/if}>选评</option>
+                  <option value="excluded" {if condition="$t.state == 'excluded'"}selected{/if}>不参评</option>
+                </select>
+              </td>
+              <td><input type="text" name="exclude_reason[{$t.id}]" value="{$t.exclude_reason}" placeholder="如：病假"></td>
+              <td><input type="number" name="sort[{$t.id}]" value="{$t.sort}" min="0"></td>
+              <td class="center"><input type="checkbox" name="remove[{$t.id}]" value="1" style="width:auto"></td>
+            </tr>
+          {/volist}
+        </tbody>
+      </table>
+    </div>
+  {/volist}
+
+  {if condition="empty($grouped)"}
+    <div class="card center muted" style="padding:36px">名单为空。请通过上方「添加单条」录入本周期的测评对象。</div>
+  {else/}
+    <button class="btn btn-primary">保存名单</button>
+    <span class="small muted">删除勾选后保存生效；已有提交的记录不会被删除。</span>
+  {/if}
+</form>
+{/block}

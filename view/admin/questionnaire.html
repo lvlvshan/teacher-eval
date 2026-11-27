@@ -1,0 +1,96 @@
+{extend name="layout/admin" /}
+
+{block name="title"}问卷设置{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">问卷设置</h1>
+    <div class="small muted">{$period.name} · 版本 {:isset($structure['questionnaire']['version']) ? $structure['questionnaire']['version'] : '1.0'} · 归档后只读</div>
+  </div>
+  <div>
+    <a class="btn" href="/admin/periods">返回周期</a>
+    <a class="btn" href="/admin/periods/{$period.id}/targets">名单</a>
+  </div>
+</div>
+
+{if condition="$period.state == 'archived'"}
+  <div class="flash flash-err">本周期已归档，问卷只读。</div>
+{/if}
+
+<form method="post" action="/admin/periods/{$period.id}/questionnaire">
+  <div class="card">
+    <h2>基本信息</h2>
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>问卷标题</span>
+          <input type="text" name="title" value="{$structure.questionnaire.title}">
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>量表上限（1 ~ 该值）</span>
+          <input type="number" name="scale_max" value="{$structure.questionnaire.scale_max}" min="2" max="10">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  {volist name="structure.dimensions" id="d"}
+    <div class="card">
+      <div class="inline" style="margin-bottom:10px">
+        <div class="grow">
+          <input type="text" name="dims[{$d.id}][name]" value="{$d.name}" style="font-weight:600">
+        </div>
+        <label class="small muted" style="display:flex;align-items:center;gap:6px">
+          <input type="checkbox" name="delete_dimension[{$d.id}]" value="1" style="width:auto"> 删除该维度
+        </label>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>题目</th>
+              <th style="width:90px">权重</th>
+              <th style="width:70px" class="center">必答</th>
+              <th style="width:60px" class="center">删除</th>
+            </tr>
+          </thead>
+          <tbody>
+            {volist name="d.questions" id="q"}
+              <tr>
+                <td><input type="text" name="questions[{$q.id}][title]" value="{$q.title}"></td>
+                <td><input type="number" name="questions[{$q.id}][weight]" value="{$q.weight}" step="0.1" min="0"></td>
+                <td class="center"><input type="checkbox" name="questions[{$q.id}][required]" value="1" {if condition="$q.required"}checked{/if} style="width:auto"></td>
+                <td class="center"><input type="checkbox" name="delete_question[{$q.id}]" value="1" style="width:auto"></td>
+              </tr>
+            {/volist}
+            <tr>
+              <td colspan="4">
+                <input type="text" name="new_questions[{$d.id}]" placeholder="在这里输入新题目，保存后添加到本维度">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin:8px 0 0">本维度 {$d.questions|count} 题</p>
+    </div>
+  {/volist}
+
+  <div class="card">
+    <h2>开放题（不计分）</h2>
+    <ul class="small" style="margin:0;padding-left:20px">
+      {volist name="structure.texts" id="t"}
+        <li>{$t.title}{if condition="!$t.required"} <span class="tag">选填</span>{/if}</li>
+      {/volist}
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>新增维度</h2>
+    <div class="inline">
+      <div class="grow"><input type="text" name="new_dimension" placeholder="如：师德师风"></div>
+      <button class="btn btn-primary">保存全部修改</button>
+    </div>
+  </div>
+</form>
+{/block}

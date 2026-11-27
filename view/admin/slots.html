@@ -1,0 +1,87 @@
+{extend name="layout/admin" /}
+
+{block name="title"}机房场次{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <div>
+    <h1 style="margin-bottom:2px">机房场次</h1>
+    <div class="small muted">{$period.name} · 学生只能在「本班 + 本时段」内提交，用于防串班刷票</div>
+  </div>
+  <div>
+    <a class="btn" href="/admin/periods">返回周期</a>
+    <a class="btn" href="/admin/periods/{$period.id}/targets">名单</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>新增场次</h2>
+  <form method="post" action="/admin/periods/{$period.id}/slots/save">
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>班级</span>
+          <select name="class_id" required>
+            <option value="">请选择</option>
+            {volist name="classes" id="c"}<option value="{$c.id}">{$c.name}</option>{/volist}
+          </select>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>机房 / 教室</span>
+          <input type="text" name="lab_room" placeholder="如：1号机房">
+        </label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>开始时间</span>
+          <input type="datetime-local" name="starts_at" required>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>结束时间</span>
+          <input type="datetime-local" name="ends_at" required>
+        </label>
+      </div>
+    </div>
+    <button class="btn btn-primary">添加场次</button>
+    <span class="small muted">同一机房时段重叠会提示冲突。场次时长决定单次作答的实际上限（不超过 30 分钟）。</span>
+  </form>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th>班级</th>
+        <th>机房</th>
+        <th>时段</th>
+        <th class="center">实交</th>
+        <th class="center">状态</th>
+        <th style="width:110px">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="list" id="s"}
+        <tr>
+          <td><b>{$s.class_name}</b></td>
+          <td>{$s.lab_room}</td>
+          <td class="small">{$s.starts_at} ~ {$s.ends_at}</td>
+          <td class="center">{$s.actual}</td>
+          <td class="center"><span class="tag {$s.status_class}">{$s.status_text}</span></td>
+          <td>
+            <form method="post" action="/admin/periods/{$period.id}/slots/delete" style="display:inline"
+                  onsubmit="return confirm('删除这个场次？')">
+              <input type="hidden" name="slot_id" value="{$s.id}">
+              <button class="btn btn-sm btn-danger">删除</button>
+            </form>
+          </td>
+        </tr>
+      {/volist}
+      {if condition="empty($list)"}
+        <tr><td colspan="6" class="center muted" style="padding:30px">还没有场次。不排场次时，全周期内本班随时可评。</td></tr>
+      {/if}
+    </tbody>
+  </table>
+</div>
+{/block}

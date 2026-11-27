@@ -1,0 +1,359 @@
+﻿{extend name="layout/base" /}
+
+{block name="title"}评价 {$target.teacher_name}{/block}
+
+{block name="body"}
+<div class="ev-head">
+  <div class="ev-head-in">
+    <div>
+      <div class="ev-class">{$target.teacher_name} <span class="ev-sep">·</span> <span class="ev-course-h">{$target.course_name}</span></div>
+      <div class="ev-period">{$klass.name} · {$period.name}</div>
+    </div>
+    <div class="ev-timer" id="timer">--:--</div>
+  </div>
+</div>
+
+<form id="evalForm" method="post" action="/c/{$classId}/t/{$target.id}" class="ev-wrap" novalidate>
+  <div class="ev-scale">
+    <div class="ev-scale-title">评分说明</div>
+    <div class="ev-scale-row">
+      <span><b>😢</b> 很不满意</span>
+      <span><b>🙁</b> 不满意</span>
+      <span><b>😐</b> 一般</span>
+      <span><b>🙂</b> 满意</span>
+      <span><b>😄</b> 很满意</span>
+    </div>
+    <div class="ev-scale-tip">可以直接按键盘 1~5 或点击笑脸打分，↑↓ 切换题目。</div>
+  </div>
+
+  {volist name="structure.dimensions" id="d"}
+    <section class="ev-sec">
+      <h2 class="ev-sec-title">{$d.name}</h2>
+      {volist name="d.questions" id="q"}
+        <div class="ev-q" tabindex="0" data-qid="{$q.id}">
+          <div class="ev-qtext"><span class="ev-qno">{$q.no}</span><span>{$q.title}</span></div>
+          <div class="ev-opts">
+            {volist name="scales" id="s"}
+              <label class="ev-opt" data-qid="{$q.id}">
+                <input type="radio" name="scores[{$q.id}]" value="{$s}" data-qid="{$q.id}">
+                <span>{if condition="$s == 1"}😢{elseif condition="$s == 2"}🙁{elseif condition="$s == 3"}😐{elseif condition="$s == 4"}🙂{else}😄{/if}</span>
+              </label>
+            {/volist}
+          </div>
+        </div>
+      {/volist}
+    </section>
+  {/volist}
+
+  {if condition="count($structure.texts) > 0"}
+  <section class="ev-sec">
+    <h2 class="ev-sec-title">开放题 <span class="ev-optional">选填</span></h2>
+    {volist name="structure.texts" id="tx"}
+      <div class="ev-textbox">
+        <label class="ev-qtext" for="tx{$tx.id}">{$tx.title}</label>
+        <textarea id="tx{$tx.id}" name="texts[{$tx.id}]" maxlength="1000"
+                  placeholder="可以写下你的真实想法，也可以留空"></textarea>
+        <div class="ev-counter"><span data-counter="tx{$tx.id}">0</span> / 1000</div>
+      </div>
+    {/volist}
+  </section>
+  {/if}
+
+  <div class="ev-actions">
+    <div class="ev-progress">已答 <b id="answered">0</b> / {$structure.rating_count} 题</div>
+    <button type="submit" id="submitBtn" class="ev-btn">提交评价</button>
+  </div>
+  <p class="ev-foot-tip">提交后不可修改。全程匿名，请如实作答。</p>
+</form>
+
+<style>
+.ev-head{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.ev-head-in{max-width:760px;margin:0 auto;padding:12px 18px;display:flex;
+  align-items:center;justify-content:space-between;gap:12px}
+.ev-class{font-size:17px;font-weight:700}
+.ev-sep{color:#cbd5e1;font-weight:400}
+.ev-course-h{font-weight:400;color:#475569;font-size:15px}
+.ev-period{font-size:12px;color:var(--muted);margin-top:2px}
+.ev-timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;color:#1d4ed8;
+  background:#eff6ff;border-radius:10px;padding:6px 11px;white-space:nowrap}
+.ev-timer.warn{color:#b45309;background:#fffbeb}
+.ev-timer.over{color:#b91c1c;background:#fef2f2}
+
+.ev-wrap{max-width:760px;margin:0 auto;padding:16px 14px 120px}
+
+.ev-scale{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.ev-scale-title{font-size:12px;font-weight:600;color:#475569;margin-bottom:6px}
+.ev-scale-row{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#475569}
+.ev-scale-row b{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:6px;
+  background:#eff6ff;color:#1d4ed8;font-size:16px;margin-right:5px}
+.ev-scale-tip{font-size:11px;color:#94a3b8;margin-top:7px}
+
+.ev-sec{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:6px 16px 14px;margin-bottom:14px}
+.ev-sec-title{font-size:14px;color:#1d4ed8;margin:12px 0 6px;padding-left:8px;
+  border-left:3px solid var(--brand);line-height:1.2}
+.ev-optional{font-size:11px;color:var(--muted);font-weight:400;margin-left:4px}
+
+.ev-q{padding:12px 0;border-bottom:1px dashed #eef2f7;outline:none}
+.ev-q:last-child{border-bottom:0}
+.ev-q.active{background:#f8fbff;box-shadow:inset 3px 0 0 var(--brand);border-radius:4px}
+.ev-qtext{display:flex;gap:8px;font-size:14px;line-height:1.6;color:var(--text)}
+.ev-qno{flex:0 0 auto;display:inline-grid;place-items:center;width:22px;height:22px;
+  border-radius:6px;background:#f1f5f9;color:#64748b;font-size:12px;margin-top:1px}
+
+.ev-opts{display:flex;gap:8px;margin-top:10px;padding-left:30px}
+.ev-opt{flex:1;max-width:78px;cursor:pointer}
+.ev-opt input{position:absolute;opacity:0;width:0;height:0}
+.ev-opt span{display:grid;place-items:center;height:38px;border:1px solid #cbd5e1;
+  border-radius:9px;font-size:24px;line-height:38px;text-align:center;transition:.12s;user-select:none}
+.ev-opt:hover span{border-color:#93c5fd;background:#f8fbff}
+.ev-opt input:checked + span{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.ev-opt input:focus-visible + span{box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+
+/* 按评分值着色：选中时背景/笑脸随分值变化，便于快速辨认（1 红 / 2 橙 / 3 黄 / 4 绿 / 5 深绿）+ 笑脸程度随分数成正比 */
+/* 按评分值着色：选中时背景随分值变化，便于快速辨认（1 红 / 2 橙 / 3 黄 / 4 绿 / 5 深绿）；笑脸本身随分数成正比 */
+.ev-opt.sel-1 input:checked + span{background:rgba(254,226,226,.92);border-color:#fca5a5}
+.ev-opt.sel-2 input:checked + span{background:rgba(255,237,213,.92);border-color:#fdba74}
+.ev-opt.sel-3 input:checked + span{background:rgba(254,249,195,.92);border-color:#fde047}
+.ev-opt.sel-4 input:checked + span{background:rgba(220,252,231,.92);border-color:#86efac}
+.ev-opt.sel-5 input:checked + span{background:rgba(187,247,208,.92);border-color:#4ade80}
+
+
+
+
+.ev-textbox{padding:10px 0 4px}
+.ev-textbox textarea{margin-top:8px;min-height:88px;font-size:14px}
+.ev-counter{text-align:right;font-size:11px;color:#94a3b8;margin-top:4px}
+
+.ev-actions{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#fff;
+  border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(15,23,42,.05)}
+.ev-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ev-actions{max-width:none;padding:10px calc((100% - 760px) / 2 + 14px)}
+.ev-progress{font-size:13px;color:var(--muted)}
+.ev-progress b{color:var(--text);font-size:16px}
+.ev-btn{padding:11px 34px;border:0;border-radius:10px;background:var(--brand);color:#fff;
+  font:inherit;font-size:15px;cursor:pointer}
+.ev-btn:hover{background:var(--brand-dark)}
+.ev-btn[disabled]{opacity:.6;cursor:not-allowed}
+.ev-foot-tip{text-align:center;font-size:11px;color:#94a3b8;margin:10px 0 0}
+.ev-shake{animation:evshake .35s}
+@keyframes evshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+@media (max-width:560px){
+  .ev-opts{padding-left:0;gap:6px}
+  .ev-opt span{height:36px;font-size:24px;line-height:36px}
+  .ev-actions{padding:10px 14px}
+  .ev-btn{padding:11px 22px}
+}
+</style>
+
+<script>
+(function(){
+  var form = document.getElementById('evalForm');
+  var classId = '{$classId}';
+  var targetId = '{$target.id}';
+  var draftKey = 'ev_draft_' + classId + '_' + targetId;
+  var total = {$structure.rating_count};
+  var expires = {$expires};
+  var autoSubmitting = false;
+
+  var qs = Array.prototype.slice.call(form.querySelectorAll('.ev-q'));
+
+  function radiosOf(qid){
+    return Array.prototype.slice.call(form.querySelectorAll('input[name="scores[' + qid + ']"]'));
+  }
+
+  function scoreOf(qid){
+    var el = form.querySelector('input[name="scores[' + qid + ']"]:checked');
+    return el ? el.value : '';
+  }
+
+  function answeredCount(){
+    var n = 0;
+    qs.forEach(function(q){
+      if(scoreOf(q.getAttribute('data-qid')) !== ''){ n++; }
+    });
+    return n;
+  }
+
+  function refresh(){
+    document.getElementById('answered').textContent = answeredCount();
+  }
+
+  /* ---------- 按分值着色（选中态） ---------- */
+  var scoreTones = [0, 1, 2, 3, 4, 5];
+  function paintOpts(qid){
+    var labels = form.querySelectorAll('label.ev-opt');
+    labels.forEach(function(l){
+      var input = l.querySelector('input');
+      if(!input){ return; }
+      var val = (input.value + '');
+      var idx = scoreTones[parseInt(val, 10)];
+      if(idx === undefined || idx === null){ return; }
+      var on = input.checked;
+      if(on){
+        l.classList.add('sel-' + val);
+      } else {
+        l.classList.remove('sel-1');
+        l.classList.remove('sel-2');
+        l.classList.remove('sel-3');
+        l.classList.remove('sel-4');
+        l.classList.remove('sel-5');
+      }
+    });
+  }
+
+  /* ---------- 本地草稿 ---------- */
+  function saveDraft(){
+    var data = { scores: {}, texts: {} };
+    qs.forEach(function(q){
+      var qid = q.getAttribute('data-qid');
+      var v = scoreOf(qid);
+      if(v !== ''){ data.scores[qid] = v; }
+    });
+    Array.prototype.slice.call(form.querySelectorAll('textarea')).forEach(function(t){
+      if(t.value.trim() !== ''){ data.texts[t.name] = t.value; }
+    });
+    try { localStorage.setItem(draftKey, JSON.stringify(data)); } catch(e){}
+  }
+
+  function loadDraft(){
+    var raw = null;
+    try { raw = localStorage.getItem(draftKey); } catch(e){ return; }
+    if(!raw){ return; }
+    var data;
+    try { data = JSON.parse(raw); } catch(e){ return; }
+    if(data && data.scores){
+      Object.keys(data.scores).forEach(function(qid){
+        var el = form.querySelector('input[name="scores[' + qid + ']"][value="' + data.scores[qid] + '"]');
+        if(el){ el.checked = true; }
+      });
+    }
+    if(data && data.texts){
+      Object.keys(data.texts).forEach(function(name){
+        var el = form.querySelector('textarea[name="' + name + '"]');
+        if(el){ el.value = data.texts[name]; }
+      });
+    }
+    refresh();
+    // 根据草稿/默认选中状态刷新打分着色
+    Array.prototype.slice.call(form.querySelectorAll('label.ev-opt')).forEach(function(l){
+      var qid = l.getAttribute('data-qid');
+      if(qid){ paintOpts(qid); }
+    });
+  }
+
+  /* ---------- 焦点与键盘 ---------- */
+  function setActive(q){
+    qs.forEach(function(x){ x.classList.remove('active'); });
+    if(q){ q.classList.add('active'); }
+  }
+
+  qs.forEach(function(q, idx){
+    q.addEventListener('click', function(e){
+      if(e.target.tagName === 'LABEL' || e.target.tagName === 'INPUT' || e.target.tagName === 'SPAN'){ return; }
+      q.focus();
+    });
+    q.addEventListener('focus', function(){ setActive(q); });
+    q.addEventListener('keydown', function(e){
+      var key = e.key;
+      if(key >= '1' && key <= '5'){
+        var val = parseInt(key, 10);
+        if(val <= 5){
+          var radios = radiosOf(q.getAttribute('data-qid'));
+          if(radios[val - 1]){
+            radios[val - 1].checked = true;
+            paintOpts(q.getAttribute('data-qid'));
+            refresh(); saveDraft();
+            var next = qs[idx + 1];
+            if(next){ next.focus(); next.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            e.preventDefault();
+          }
+        }
+      } else if(key === 'ArrowDown' || key === 'ArrowRight' || key === 'Enter'){
+        if(qs[idx + 1]){ qs[idx + 1].focus(); qs[idx + 1].scrollIntoView({ block: 'center', behavior: 'smooth' }); e.preventDefault(); }
+      } else if(key === 'ArrowUp' || key === 'ArrowLeft'){
+        if(qs[idx - 1]){ qs[idx - 1].focus(); qs[idx - 1].scrollIntoView({ block: 'center', behavior: 'smooth' }); e.preventDefault(); }
+      }
+    });
+  });
+
+  form.addEventListener('change', function(e){
+    if(e.target && e.target.type === 'radio'){ refresh(); saveDraft(); paintOpts(e.target.getAttribute('data-qid')); }
+  });
+  form.addEventListener('input', function(e){
+    if(e.target && e.target.tagName === 'TEXTAREA'){
+      var c = document.querySelector('[data-counter="' + e.target.id + '"]');
+      if(c){ c.textContent = e.target.value.length; }
+      saveDraft();
+    }
+  });
+
+  /* ---------- 倒计时 ---------- */
+  var timerEl = document.getElementById('timer');
+  var deadline = expires * 1000;
+
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+
+  function tick(){
+    var left = Math.round((deadline - Date.now()) / 1000);
+    if(left <= 0){
+      timerEl.textContent = '时间到';
+      timerEl.className = 'ev-timer over';
+      clearInterval(handle);
+      autoSubmit();
+      return;
+    }
+    timerEl.textContent = pad(Math.floor(left / 60)) + ':' + pad(left % 60);
+    timerEl.className = 'ev-timer' + (left <= 300 ? ' warn' : '');
+  }
+
+  function autoSubmit(){
+    if(autoSubmitting){ return; }
+    autoSubmitting = true;
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '时间到，正在提交…';
+    try { localStorage.removeItem(draftKey); } catch(e){}
+    form.submit();
+  }
+
+  /* ---------- 校验 ---------- */
+  form.addEventListener('submit', function(e){
+    if(autoSubmitting){ return; }
+    var missing = null;
+    qs.forEach(function(q){
+      if(!missing && scoreOf(q.getAttribute('data-qid')) === ''){ missing = q; }
+    });
+    if(missing){
+      e.preventDefault();
+      setActive(missing);
+      missing.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      missing.classList.add('ev-shake');
+      setTimeout(function(){ missing.classList.remove('ev-shake'); }, 400);
+      return;
+    }
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+    try { localStorage.removeItem(draftKey); } catch(e){}
+  });
+
+  loadDraft();
+  tick();
+  var handle = setInterval(tick, 1000);
+  refresh();
+
+  window.addEventListener('beforeunload', function(){
+    if(!autoSubmitting){ saveDraft(); }
+  });
+
+  /* 默认定位到第一道未答题 */
+  var firstMissing = null;
+  qs.forEach(function(q){
+    if(!firstMissing && scoreOf(q.getAttribute('data-qid')) === ''){ firstMissing = q; }
+  });
+  if(firstMissing){ setActive(firstMissing); }
+})();
+</script>
+{/block}

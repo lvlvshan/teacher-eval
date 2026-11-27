@@ -1,0 +1,55 @@
+{extend name="layout/base" /}
+
+{block name="title"}学员满意度测评{/block}
+
+{block name="body"}
+<div class="ev-hero">
+  <div class="ev-box">
+    <div class="ev-kicker">匿名 · 无需登录</div>
+    <h1 class="ev-title">学员对教员满意度调查</h1>
+    <p class="ev-sub">
+      {$period.name} · 以下是根据你的网络（{$ip}）识别出的可参与班级，选择本班即可开始。
+    </p>
+
+    <div class="ev-classes">
+      {volist name="classes" id="c"}
+        <a class="ev-class-item" href="/c/{$c.id}">
+          <span class="ev-class-name">{$c.name}</span>
+          <span class="ev-class-meta">{$c.target_count} 位教员 · 进入</span>
+        </a>
+      {/volist}
+      {if condition="empty($classes)"}
+        <div class="ev-empty">当前网络没有可参与的测评，请联系班主任确认 IP 段配置。</div>
+      {/if}
+    </div>
+
+    <div class="ev-tips">
+      <div>· 本期测评仅限校园网内访问，请在机房电脑上作答。</div>
+      <div>· 每个问卷（教员）每台设备（IP + 设备指纹）只允许提交一次，提交后不可修改。</div>
+      <div>· 全程匿名，不记录姓名、学号，请如实作答。</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.ev-hero{min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(1200px 600px at 50% -10%,#dbeafe 0%,transparent 60%),var(--bg)}
+.ev-box{width:100%;max-width:560px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:32px 28px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+.ev-kicker{display:inline-block;font-size:12px;color:#1d4ed8;background:#eff6ff;
+  border-radius:999px;padding:3px 10px;margin-bottom:12px}
+.ev-title{font-size:22px;margin-bottom:8px}
+.ev-sub{color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.7}
+.ev-classes{display:flex;flex-direction:column;gap:10px}
+.ev-class-item{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 18px;border:1px solid var(--line);border-radius:12px;color:var(--text);
+  background:#fff;transition:border-color .15s,box-shadow .15s}
+.ev-class-item:hover{border-color:var(--brand);box-shadow:0 4px 14px rgba(37,99,235,.10);text-decoration:none}
+.ev-class-name{font-size:16px;font-weight:700}
+.ev-class-meta{font-size:12px;color:var(--muted);flex:0 0 auto}
+.ev-empty{border:1px dashed var(--line);border-radius:12px;padding:28px 16px;
+  text-align:center;color:var(--muted);font-size:13px}
+.ev-tips{margin-top:22px;padding-top:16px;border-top:1px dashed var(--line);
+  font-size:12px;color:var(--muted);line-height:2}
+</style>
+{/block}

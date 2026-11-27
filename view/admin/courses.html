@@ -1,0 +1,65 @@
+{extend name="layout/admin" /}
+
+{block name="title"}课程管理{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <h1 style="margin:0">课程管理</h1>
+  <div class="small muted">统计口径是「班级 + 课程 + 教员」，课程必须维护准确</div>
+</div>
+
+<div class="card">
+  <h2>{if condition="!empty($edit)"}编辑课程{else/}新增课程{/if}</h2>
+  <form method="post" action="/admin/courses/save">
+    <input type="hidden" name="id" value="{if condition="!empty($edit)"}{$edit.id}{else/}0{/if}">
+    <div class="row">
+      <div class="col">
+        <label class="field"><span>课程名称 *</span>
+          <input type="text" name="name" value="{if condition="!empty($edit)"}{$edit.name}{/if}" placeholder="如：Java 基础" required>
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>课程代码</span>
+          <input type="text" name="code" value="{if condition="!empty($edit)"}{$edit.code}{/if}" placeholder="JAVA">
+        </label>
+      </div>
+      <div class="col">
+        <label class="field"><span>状态</span>
+          <select name="status">
+            <option value="1" {if condition="!empty($edit) && $edit.status == 1"}selected{/if}>启用</option>
+            <option value="0" {if condition="!empty($edit) && $edit.status == 0"}selected{/if}>停用</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <button class="btn btn-primary">保存</button>
+    {if condition="!empty($edit)"}<a class="btn" href="/admin/courses">取消</a>{/if}
+  </form>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>课程</th><th>代码</th><th>状态</th><th style="width:130px">操作</th></tr></thead>
+    <tbody>
+      {volist name="list" id="c"}
+        <tr>
+          <td><b>{$c.name}</b></td>
+          <td class="muted">{$c.code}</td>
+          <td>{if condition="$c.status == 1"}<span class="tag tag-ok">启用</span>{else/}<span class="tag">停用</span>{/if}</td>
+          <td>
+            <a class="btn btn-sm" href="/admin/courses?edit={$c.id}">编辑</a>
+            <form method="post" action="/admin/courses/delete" style="display:inline"
+                  onsubmit="return confirm('确定删除该课程？')">
+              <input type="hidden" name="id" value="{$c.id}">
+              <button class="btn btn-sm btn-danger">删除</button>
+            </form>
+          </td>
+        </tr>
+      {/volist}
+      {if condition="empty($list)"}
+        <tr><td colspan="4" class="center muted" style="padding:30px">还没有课程。</td></tr>
+      {/if}
+    </tbody>
+  </table>
+</div>
+{/block}

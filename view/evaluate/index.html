@@ -1,0 +1,153 @@
+{extend name="layout/base" /}
+
+{block name="title"}{$klass.name} · 学员满意度测评{/block}
+
+{block name="body"}
+<div class="ev-head">
+  <div class="ev-head-in">
+    <div>
+      <div class="ev-class">{$klass.name}</div>
+      <div class="ev-period">{$period.name} · 学员对教员满意度调查</div>
+    </div>
+    <div class="ev-timer" id="timer">--:--</div>
+  </div>
+</div>
+
+<div class="ev-wrap">
+  <div class="ev-summary">
+    <div>
+      <b>{$doneCount}</b><span> / {:count($targets)} 已完成</span>
+    </div>
+    <div class="ev-bar"><i id="bar" style="width:0%"></i></div>
+    <div class="ev-note">
+      {if condition="!empty($slot)"}
+        本场：{$slot.lab_room} {$slot.starts_at} ~ {$slot.ends_at}
+      {else/}
+        本周期内可随时作答
+      {/if}
+    </div>
+  </div>
+
+  {if condition="$doneCount >= count($targets) && count($targets) > 0"}
+    <div class="ev-done-all">
+      <div class="ev-check">✓</div>
+      <h2>本班所有教员已评价完成</h2>
+      <p>感谢你的参与，可以关闭本页面了。</p>
+    </div>
+  {else/}
+    <div class="ev-list">
+      {volist name="targets" id="t"}
+        <div class="ev-item {if condition="$t.done"}is-done{/if}">
+          <div class="ev-avatar">{:mb_substr($t['teacher_name'], 0, 1)}</div>
+          <div class="ev-info">
+            <div class="ev-name">
+              {$t.teacher_name}
+              {if condition="$t.state == 'optional'"}<span class="ev-tag">选评</span>{/if}
+            </div>
+            <div class="ev-course">{$t.course_name}</div>
+          </div>
+          <div class="ev-action">
+            {if condition="$t.done"}
+              <span class="ev-ok">已提交</span>
+            {else/}
+              <a class="ev-go" href="/c/{$classId}/t/{$t.id}">开始评价</a>
+            {/if}
+          </div>
+        </div>
+      {/volist}
+      {if condition="count($targets) == 0"}
+        <div class="ev-empty">本月暂无需要评价的教员，请联系班主任确认名单。</div>
+      {/if}
+    </div>
+  {/if}
+
+  <div class="ev-foot">
+    <p>提示：每道题都要打分，1 分最低、5 分最高。提交后不可修改。</p>
+    <p>每个问卷（教员）每台设备只允许提交一次，重复提交会被拦截。</p>
+    <p>全程匿名，不会记录你的姓名或学号，请放心作答。</p>
+  </div>
+</div>
+
+<style>
+.ev-head{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.ev-head-in{max-width:720px;margin:0 auto;padding:14px 18px;display:flex;
+  align-items:center;justify-content:space-between;gap:12px}
+.ev-class{font-size:18px;font-weight:700}
+.ev-period{font-size:12px;color:var(--muted);margin-top:2px}
+.ev-timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;color:#1d4ed8;
+  background:#eff6ff;border-radius:10px;padding:6px 12px}
+.ev-timer.warn{color:#b45309;background:#fffbeb}
+.ev-timer.over{color:#b91c1c;background:#fef2f2}
+.ev-wrap{max-width:720px;margin:0 auto;padding:18px 16px 40px}
+.ev-summary{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--muted)}
+.ev-summary b{font-size:20px;color:var(--text)}
+.ev-bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden;margin:10px 0 8px}
+.ev-bar i{display:block;height:100%;background:var(--brand);border-radius:999px;transition:width .3s}
+.ev-note{font-size:12px}
+.ev-list{display:flex;flex-direction:column;gap:10px}
+.ev-item{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px}
+.ev-item.is-done{background:#fafdfb;border-color:#dcfce7}
+.ev-avatar{width:42px;height:42px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:#eff6ff;color:#1d4ed8;font-weight:700;font-size:16px}
+.ev-item.is-done .ev-avatar{background:#ecfdf5;color:#15803d}
+.ev-info{flex:1;min-width:0}
+.ev-name{font-weight:600;font-size:15px}
+.ev-tag{font-size:11px;color:#b45309;background:#fffbeb;border-radius:999px;padding:1px 7px;margin-left:6px;font-weight:400}
+.ev-course{font-size:12px;color:var(--muted);margin-top:2px}
+.ev-action{flex:0 0 auto}
+.ev-go{display:inline-block;padding:9px 18px;border-radius:9px;background:var(--brand);
+  color:#fff;font-size:14px}
+.ev-go:hover{background:var(--brand-dark);text-decoration:none}
+.ev-ok{display:inline-block;padding:7px 14px;border-radius:9px;background:#ecfdf5;
+  color:#15803d;font-size:13px}
+.ev-done-all{background:#fff;border:1px solid #dcfce7;border-radius:12px;padding:36px 20px;text-align:center}
+.ev-check{width:54px;height:54px;border-radius:50%;background:#ecfdf5;color:#15803d;
+  display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
+.ev-done-all p{color:var(--muted);font-size:13px;margin:0}
+.ev-empty{background:#fff;border:1px dashed var(--line);border-radius:12px;
+  padding:34px 16px;text-align:center;color:var(--muted);font-size:13px}
+.ev-foot{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.9}
+.ev-foot p{margin:0}
+@media (max-width:520px){
+  .ev-go{padding:8px 14px}
+  .ev-avatar{width:38px;height:38px}
+}
+</style>
+
+<script>
+(function(){
+  var deadline = {$expires} * 1000;
+  var total = Math.max(1, Math.round((deadline - Date.now()) / 1000));
+  var timer = document.getElementById('timer');
+  var bar = document.getElementById('bar');
+  var done = {$doneCount};
+  var all = {$targets|count};
+  if(bar && all > 0){ bar.style.width = Math.min(100, Math.round(done / all * 100)) + '%'; }
+
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+
+  function tick(){
+    var left = Math.round((deadline - Date.now()) / 1000);
+    if(left <= 0){
+      timer.textContent = '已结束';
+      timer.className = 'ev-timer over';
+      clearInterval(handle);
+      return;
+    }
+    var m = Math.floor(left / 60);
+    var s = left % 60;
+    timer.textContent = pad(m) + ':' + pad(s);
+    timer.className = 'ev-timer' + (left <= 300 ? ' warn' : '');
+  }
+
+  tick();
+  var handle = setInterval(tick, 1000);
+
+  window.addEventListener('pageshow', function(e){
+    if(e.persisted){ location.reload(); }
+  });
+})();
+</script>
+{/block}

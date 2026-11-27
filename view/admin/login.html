@@ -1,0 +1,29 @@
+{extend name="layout/base" /}
+
+{block name="title"}后台登录{/block}
+
+{block name="body"}
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px">
+  <div style="width:100%;max-width:380px">
+    <div class="card">
+      <h1 style="margin-bottom:4px">学员满意度测评</h1>
+      <p class="muted small" style="margin-bottom:18px">后台管理登录</p>
+
+      {if condition="!empty($flash)"}
+        <div class="flash flash-{$flash.type}">{$flash.msg}</div>
+      {/if}
+
+      <form method="post" action="/admin/login">
+        <label class="field"><span>账号</span>
+          <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+        <label class="field"><span>密码</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary" style="width:100%">登 录</button>
+      </form>
+      <p class="small muted mt" style="margin-bottom:0">默认账号 admin / admin123，登录后请尽快修改。</p>
+    </div>
+  </div>
+</div>
+{/block}

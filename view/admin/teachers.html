@@ -1,0 +1,114 @@
+{extend name="layout/admin" /}
+
+{block name="title"}教员管理{/block}
+
+{block name="content"}
+<div class="pagehead">
+  <h1 style="margin:0">教员管理</h1>
+  <form method="get" action="/admin/teachers" class="inline">
+    <input type="search" name="kw" value="{$kw}" placeholder="姓名或工号" style="width:200px">
+    <button class="btn">搜索</button>
+  </form>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>{if condition="!empty($edit)"}编辑教员{else/}新增教员{/if}</h2>
+      <form method="post" action="/admin/teachers/save">
+        <input type="hidden" name="id" value="{if condition="!empty($edit)"}{$edit.id}{else/}0{/if}">
+        <div class="row">
+          <div class="col">
+            <label class="field"><span>工号</span>
+              <input type="text" name="employee_no" value="{if condition="!empty($edit)"}{$edit.employee_no}{/if}" placeholder="T001">
+            </label>
+          </div>
+          <div class="col">
+            <label class="field"><span>姓名 *</span>
+              <input type="text" name="name" value="{if condition="!empty($edit)"}{$edit.name}{/if}" required>
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <label class="field"><span>性别</span>
+              <select name="gender">
+                <option value="0">未填</option>
+                <option value="1" {if condition="!empty($edit) && $edit.gender == 1"}selected{/if}>男</option>
+                <option value="2" {if condition="!empty($edit) && $edit.gender == 2"}selected{/if}>女</option>
+              </select>
+            </label>
+          </div>
+          <div class="col">
+            <label class="field"><span>科目</span>
+              <input type="text" name="subject" value="{if condition="!empty($edit)"}{$edit.subject}{/if}">
+            </label>
+          </div>
+          <div class="col">
+            <label class="field"><span>部门</span>
+              <input type="text" name="dept" value="{if condition="!empty($edit)"}{$edit.dept}{/if}">
+            </label>
+          </div>
+        </div>
+        <label class="field"><span>状态</span>
+          <select name="status">
+            <option value="1" {if condition="!empty($edit) && $edit.status == 1"}selected{/if}>在职</option>
+            <option value="0" {if condition="!empty($edit) && $edit.status == 0"}selected{/if}>停用</option>
+          </select>
+        </label>
+        <button class="btn btn-primary">保存</button>
+        {if condition="!empty($edit)"}<a class="btn" href="/admin/teachers">取消</a>{/if}
+      </form>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>批量导入</h2>
+      <form method="post" action="/admin/teachers/import" enctype="multipart/form-data">
+        <label class="field"><span>上传 CSV（列顺序：工号,姓名,性别,科目,部门）</span>
+          <input type="file" name="file" accept=".csv,.txt">
+        </label>
+        <label class="field"><span>或直接粘贴（每行一条）</span>
+          <textarea name="csv" placeholder="T001,张明,男,Java,教学部&#10;T002,李静,女,UI设计,教学部"></textarea>
+        </label>
+        <button class="btn">开始导入</button>
+        <span class="small muted">工号已存在则更新，不会重复创建。</span>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th>工号</th><th>姓名</th><th>性别</th><th>科目</th><th>部门</th>
+        <th class="center">状态</th><th style="width:130px">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {volist name="list" id="t"}
+        <tr>
+          <td class="muted">{$t.employee_no}</td>
+          <td><b>{$t.name}</b></td>
+          <td>{if condition="$t.gender == 1"}男{elseif condition="$t.gender == 2"/}女{else/}—{/if}</td>
+          <td>{$t.subject}</td>
+          <td>{$t.dept}</td>
+          <td>{if condition="$t.status == 1"}<span class="tag tag-ok">在职</span>{else/}<span class="tag">停用</span>{/if}</td>
+          <td>
+            <a class="btn btn-sm" href="/admin/teachers?edit={$t.id}">编辑</a>
+            <form method="post" action="/admin/teachers/delete" style="display:inline"
+                  onsubmit="return confirm('删除教员，确定？')">
+              <input type="hidden" name="id" value="{$t.id}">
+              <button class="btn btn-sm btn-danger">删除</button>
+            </form>
+          </td>
+        </tr>
+      {/volist}
+      {if condition="empty($list)"}
+        <tr><td colspan="8" class="center muted" style="padding:30px">还没有教员，先在上面添加。</td></tr>
+      {/if}
+    </tbody>
+  </table>
+</div>
+{/block}
